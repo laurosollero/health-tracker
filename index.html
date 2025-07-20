@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mounjaro Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .content {
+            padding: 30px 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 30px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .entry-card {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .entry-date {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .entry-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .entry-detail {
+            text-align: center;
+        }
+
+        .entry-detail strong {
+            display: block;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .entry-detail span {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .entry-notes {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-style: italic;
+            color: #555;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px 20px;
+        }
+
+        .message {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .debug-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            margin-top: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            
+            .entry-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💊 Mounjaro Tracker</h1>
+            <p>Track your medication, weight, and progress</p>
+        </div>
+
+        <div class="content">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="switchTab('log')">Log Entry</button>
+                <button class="tab-button" onclick="switchTab('history')">History</button>
+                <button class="tab-button" onclick="switchTab('stats')">Stats</button>
+            </div>
+
+            <!-- Log Entry Tab -->
+            <div id="log" class="tab-content active">
+                <div id="messages"></div>
+                <form id="entryForm">
+                    <div class="form-group">
+                        <label for="date">Date & Time</label>
+                        <input type="datetime-local" id="date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dose">Mounjaro Dose</label>
+                        <select id="dose" required>
+                            <option value="">Select dose</option>
+                            <option value="2.5mg">2.5mg</option>
+                            <option value="5mg">5mg</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="weight">Weight (optional)</label>
+                        <input type="number" id="weight" step="0.1" placeholder="Enter weight in kg or lbs">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes (side effects, feelings, etc.)</label>
+                        <textarea id="notes" placeholder="Any observations, side effects, or how you're feeling..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn">Log Entry</button>
+                </form>
+            </div>
+
+            <!-- History Tab -->
+            <div id="history" class="tab-content">
+                <div id="entriesList"></div>
+            </div>
+
+            <!-- Stats Tab -->
+            <div id="stats" class="tab-content">
+                <div id="statsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let entries = [];
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load data first
+            loadData();
+            
+            // Set current date/time
+            setCurrentDateTime();
+            
+            // Set last used dose
+            setLastUsedDose();
+            
+            // Load display
+            displayEntries();
+            displayStats();
+        });
+
+        // Load data from storage
+        function loadData() {
+            try {
+                const stored = window.localStorage ? localStorage.getItem('mountaroEntries') : null;
+                entries = stored ? JSON.parse(stored) : [];
+            } catch (error) {
+                console.log('Storage not available, using memory only');
+                entries = [];
+            }
+        }
+
+        // Save data to storage
+        function saveData() {
+            try {
+                if (window.localStorage) {
+                    localStorage.setItem('mountaroEntries', JSON.stringify(entries));
+                }
+            } catch (error) {
+                console.log('Could not save to storage');
+            }
+        }
+
+        // Set current date/time
+        function setCurrentDateTime() {
+            const now = new Date();
+            document.getElementById('date').value = now.toISOString().slice(0, 16);
+        }
+
+        // Set last used dose
+        function setLastUsedDose() {
+            if (entries.length > 0) {
+                const lastDose = entries[0].dose;
+                document.getElementById('dose').value = lastDose;
+            }
+        }
+
+        // Show message to user
+        function showMessage(text, type = 'success') {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            
+            // Clear message after 5 seconds
+            setTimeout(() => {
+                messagesDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        // Show debug info
+        function showDebugInfo() {
+            const debugDiv = document.createElement('div');
+            debugDiv.className = 'debug-info';
+            debugDiv.innerHTML = `
+                Debug Info:<br>
+                - Entries loaded: ${entries.length}<br>
+                - LocalStorage available: ${!!window.localStorage}<br>
+                - Current time: ${new Date().toISOString()}<br>
+                - Form elements found: ${document.getElementById('entryForm') ? 'Yes' : 'No'}
+            `;
+            document.getElementById('messages').appendChild(debugDiv);
+        }
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab and activate button
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            
+            // Refresh data when switching tabs
+            if (tabName === 'history') displayEntries();
+            if (tabName === 'stats') displayStats();
+        }
+
+        // Form submission
+        document.getElementById('entryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            try {
+                showMessage('Saving entry...', 'success');
+                
+                const entry = {
+                    id: Date.now(),
+                    date: document.getElementById('date').value,
+                    dose: document.getElementById('dose').value,
+                    weight: document.getElementById('weight').value || null,
+                    notes: document.getElementById('notes').value || null
+                };
+
+                if (!entry.dose) {
+                    showMessage('Please select a dose', 'error');
+                    return;
+                }
+
+                entries.unshift(entry); // Add to beginning of array
+                saveData();
+
+                // Reset form and set defaults
+                document.getElementById('entryForm').reset();
+                setCurrentDateTime();
+                setLastUsedDose();
+
+                // Show success and refresh display
+                showMessage(`Entry logged successfully! Total entries: ${entries.length}`, 'success');
+                displayEntries();
+                displayStats();
+                
+            } catch (error) {
+                showMessage(`Error saving entry: ${error.message}`, 'error');
+                showDebugInfo();
+            }
+        });
+
+        // Display entries
+        function displayEntries() {
+            const entriesList = document.getElementById('entriesList');
+            
+            if (entries.length === 0) {
+                entriesList.innerHTML = '<div class="no-data">No entries yet. Start by logging your first dose!</div>';
+                return;
+            }
+
+            entriesList.innerHTML = entries.map(entry => {
+                const date = new Date(entry.date);
+                const formattedDate = date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                return `
+                    <div class="entry-card">
+                        <div class="entry-date">${formattedDate}</div>
+                        <div class="entry-details">
+                            <div class="entry-detail">
+                                <strong>${entry.dose}</strong>
+                                <span>Dose</span>
+                            </div>
+                            ${entry.weight ? `
+                                <div class="entry-detail">
+                                    <strong>${entry.weight}</strong>
+                                    <span>Weight</span>
+                                </div>
+                            ` : '<div class="entry-detail"><strong>-</strong><span>Weight</span></div>'}
+                        </div>
+                        ${entry.notes ? `<div class="entry-notes">${entry.notes}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Display stats
+        function displayStats() {
+            const statsContent = document.getElementById('statsContent');
+            
+            if (entries.length === 0) {
+                statsContent.innerHTML = '<div class="no-data">No data available yet.</div>';
+                return;
+            }
+
+            const totalEntries = entries.length;
+            const entriesWithWeight = entries.filter(e => e.weight).length;
+            const latestWeight = entries.find(e => e.weight)?.weight || 'N/A';
+            const latestDose = entries[0]?.dose || 'N/A';
+
+            // Calculate days since last dose
+            const lastEntryDate = new Date(entries[0].date);
+            const daysSinceLastDose = Math.floor((new Date() - lastEntryDate) / (1000 * 60 * 60 * 24));
+
+            statsContent.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${totalEntries}</div>
+                        <div class="stat-label">Total Doses</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${daysSinceLastDose}</div>
+                        <div class="stat-label">Days Since Last</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${latestDose}</div>
+                        <div class="stat-label">Current Dose</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${latestWeight}</div>
+                        <div class="stat-label">Latest Weight</div>
+                    </div>
+                </div>
+                
+                <button class="btn export-btn" onclick="exportData()">Export Data</button>
+            `;
+        }
+
+        // Export data
+        function exportData() {
+            const dataStr = JSON.stringify(entries, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'mounjaro-data.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
