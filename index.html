@@ -63,7 +63,7 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             transition: all 0.3s;
         }
 
@@ -118,7 +118,6 @@
         .btn {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, #4CAF50, #45a049);
             color: white;
             border: none;
             border-radius: 12px;
@@ -126,6 +125,14 @@
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
         }
 
         .btn:hover {
@@ -141,7 +148,35 @@
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 15px;
+        }
+
+        .entry-card.medication {
+            border-left: 4px solid #4CAF50;
+        }
+
+        .entry-card.daily {
             border-left: 4px solid #667eea;
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .entry-type {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .entry-type.medication {
+            background: #4CAF50;
         }
 
         .entry-date {
@@ -236,14 +271,14 @@
             border: 1px solid #f5c6cb;
         }
 
-        .debug-info {
-            background: #f8f9fa;
-            padding: 15px;
+        .days-since {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 10px 15px;
             border-radius: 8px;
-            margin-top: 20px;
-            font-family: monospace;
-            font-size: 12px;
-            color: #666;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
         }
 
         .export-btn {
@@ -261,6 +296,11 @@
             .entry-details {
                 grid-template-columns: 1fr;
             }
+
+            .tab-button {
+                font-size: 12px;
+                padding: 10px 8px;
+            }
         }
     </style>
 </head>
@@ -268,23 +308,48 @@
     <div class="container">
         <div class="header">
             <h1>💊 Mounjaro Tracker</h1>
-            <p>Track your medication, weight, and progress</p>
+            <p>Track your weekly medication and daily progress</p>
         </div>
 
         <div class="content">
             <div class="tab-buttons">
-                <button class="tab-button active" onclick="switchTab('log')">Log Entry</button>
+                <button class="tab-button active" onclick="switchTab('daily')">Daily Log</button>
+                <button class="tab-button" onclick="switchTab('medication')">Medication</button>
                 <button class="tab-button" onclick="switchTab('history')">History</button>
                 <button class="tab-button" onclick="switchTab('stats')">Stats</button>
             </div>
 
-            <!-- Log Entry Tab -->
-            <div id="log" class="tab-content active">
-                <div id="messages"></div>
-                <form id="entryForm">
+            <!-- Daily Check-in Tab -->
+            <div id="daily" class="tab-content active">
+                <div id="dailyMessages"></div>
+                <div id="daysSinceLastDose"></div>
+                <form id="dailyForm">
                     <div class="form-group">
-                        <label for="date">Date & Time</label>
-                        <input type="datetime-local" id="date" required>
+                        <label for="dailyDate">Date & Time</label>
+                        <input type="datetime-local" id="dailyDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dailyWeight">Weight (optional)</label>
+                        <input type="number" id="dailyWeight" step="0.1" placeholder="Enter weight in kg or lbs">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dailyNotes">How are you feeling? Any symptoms or observations?</label>
+                        <textarea id="dailyNotes" placeholder="Energy levels, appetite changes, side effects, mood, etc..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Log Daily Check-in</button>
+                </form>
+            </div>
+
+            <!-- Medication Tab -->
+            <div id="medication" class="tab-content">
+                <div id="medicationMessages"></div>
+                <form id="medicationForm">
+                    <div class="form-group">
+                        <label for="medDate">Date & Time</label>
+                        <input type="datetime-local" id="medDate" required>
                     </div>
 
                     <div class="form-group">
@@ -297,16 +362,16 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="weight">Weight (optional)</label>
-                        <input type="number" id="weight" step="0.1" placeholder="Enter weight in kg or lbs">
+                        <label for="medWeight">Weight (optional)</label>
+                        <input type="number" id="medWeight" step="0.1" placeholder="Enter weight in kg or lbs">
                     </div>
 
                     <div class="form-group">
-                        <label for="notes">Notes (side effects, feelings, etc.)</label>
-                        <textarea id="notes" placeholder="Any observations, side effects, or how you're feeling..."></textarea>
+                        <label for="medNotes">Notes about this dose</label>
+                        <textarea id="medNotes" placeholder="Injection site, how you're feeling, any observations..."></textarea>
                     </div>
 
-                    <button type="submit" class="btn">Log Entry</button>
+                    <button type="submit" class="btn btn-success">Log Medication Dose</button>
                 </form>
             </div>
 
@@ -331,11 +396,14 @@
             // Load data first
             loadData();
             
-            // Set current date/time
+            // Set current date/time for both forms
             setCurrentDateTime();
             
             // Set last used dose
             setLastUsedDose();
+            
+            // Update days since last dose
+            updateDaysSinceLastDose();
             
             // Load display
             displayEntries();
@@ -367,20 +435,42 @@
         // Set current date/time
         function setCurrentDateTime() {
             const now = new Date();
-            document.getElementById('date').value = now.toISOString().slice(0, 16);
+            const currentTime = now.toISOString().slice(0, 16);
+            document.getElementById('dailyDate').value = currentTime;
+            document.getElementById('medDate').value = currentTime;
         }
 
         // Set last used dose
         function setLastUsedDose() {
-            if (entries.length > 0) {
-                const lastDose = entries[0].dose;
-                document.getElementById('dose').value = lastDose;
+            const lastMedication = entries.find(entry => entry.type === 'medication');
+            if (lastMedication) {
+                document.getElementById('dose').value = lastMedication.dose;
+            }
+        }
+
+        // Update days since last dose
+        function updateDaysSinceLastDose() {
+            const lastMedication = entries.find(entry => entry.type === 'medication');
+            const daysSinceDiv = document.getElementById('daysSinceLastDose');
+            
+            if (lastMedication) {
+                const lastDate = new Date(lastMedication.date);
+                const now = new Date();
+                const daysSince = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+                
+                daysSinceDiv.innerHTML = `<div class="days-since">
+                    ${daysSince} day${daysSince !== 1 ? 's' : ''} since last Mounjaro dose (${lastMedication.dose})
+                </div>`;
+            } else {
+                daysSinceDiv.innerHTML = `<div class="days-since">
+                    No medication doses logged yet
+                </div>`;
             }
         }
 
         // Show message to user
-        function showMessage(text, type = 'success') {
-            const messagesDiv = document.getElementById('messages');
+        function showMessage(text, type = 'success', targetId = 'dailyMessages') {
+            const messagesDiv = document.getElementById(targetId);
             messagesDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
             
             // Clear message after 5 seconds
@@ -389,19 +479,7 @@
             }, 5000);
         }
 
-        // Show debug info
-        function showDebugInfo() {
-            const debugDiv = document.createElement('div');
-            debugDiv.className = 'debug-info';
-            debugDiv.innerHTML = `
-                Debug Info:<br>
-                - Entries loaded: ${entries.length}<br>
-                - LocalStorage available: ${!!window.localStorage}<br>
-                - Current time: ${new Date().toISOString()}<br>
-                - Form elements found: ${document.getElementById('entryForm') ? 'Yes' : 'No'}
-            `;
-            document.getElementById('messages').appendChild(debugDiv);
-        }
+        // Tab switching
         function switchTab(tabName) {
             // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
@@ -418,46 +496,76 @@
             document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
             
             // Refresh data when switching tabs
+            if (tabName === 'daily') {
+                updateDaysSinceLastDose();
+            }
             if (tabName === 'history') displayEntries();
             if (tabName === 'stats') displayStats();
         }
 
-        // Form submission
-        document.getElementById('entryForm').addEventListener('submit', function(e) {
+        // Daily form submission
+        document.getElementById('dailyForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             try {
-                showMessage('Saving entry...', 'success');
-                
                 const entry = {
                     id: Date.now(),
-                    date: document.getElementById('date').value,
-                    dose: document.getElementById('dose').value,
-                    weight: document.getElementById('weight').value || null,
-                    notes: document.getElementById('notes').value || null
+                    type: 'daily',
+                    date: document.getElementById('dailyDate').value,
+                    weight: document.getElementById('dailyWeight').value || null,
+                    notes: document.getElementById('dailyNotes').value || null
                 };
 
-                if (!entry.dose) {
-                    showMessage('Please select a dose', 'error');
-                    return;
-                }
-
-                entries.unshift(entry); // Add to beginning of array
+                entries.unshift(entry);
                 saveData();
 
                 // Reset form and set defaults
-                document.getElementById('entryForm').reset();
+                document.getElementById('dailyForm').reset();
                 setCurrentDateTime();
-                setLastUsedDose();
 
-                // Show success and refresh display
-                showMessage(`Entry logged successfully! Total entries: ${entries.length}`, 'success');
+                showMessage(`Daily check-in logged! Total entries: ${entries.length}`, 'success', 'dailyMessages');
                 displayEntries();
                 displayStats();
                 
             } catch (error) {
-                showMessage(`Error saving entry: ${error.message}`, 'error');
-                showDebugInfo();
+                showMessage(`Error saving entry: ${error.message}`, 'error', 'dailyMessages');
+            }
+        });
+
+        // Medication form submission
+        document.getElementById('medicationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            try {
+                const entry = {
+                    id: Date.now(),
+                    type: 'medication',
+                    date: document.getElementById('medDate').value,
+                    dose: document.getElementById('dose').value,
+                    weight: document.getElementById('medWeight').value || null,
+                    notes: document.getElementById('medNotes').value || null
+                };
+
+                if (!entry.dose) {
+                    showMessage('Please select a dose', 'error', 'medicationMessages');
+                    return;
+                }
+
+                entries.unshift(entry);
+                saveData();
+
+                // Reset form and set defaults
+                document.getElementById('medicationForm').reset();
+                setCurrentDateTime();
+                setLastUsedDose();
+
+                showMessage(`Medication dose logged! Total entries: ${entries.length}`, 'success', 'medicationMessages');
+                updateDaysSinceLastDose();
+                displayEntries();
+                displayStats();
+                
+            } catch (error) {
+                showMessage(`Error saving entry: ${error.message}`, 'error', 'medicationMessages');
             }
         });
 
@@ -466,7 +574,7 @@
             const entriesList = document.getElementById('entriesList');
             
             if (entries.length === 0) {
-                entriesList.innerHTML = '<div class="no-data">No entries yet. Start by logging your first dose!</div>';
+                entriesList.innerHTML = '<div class="no-data">No entries yet. Start by logging your daily check-in or medication dose!</div>';
                 return;
             }
 
@@ -474,24 +582,49 @@
                 const date = new Date(entry.date);
                 const formattedDate = date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 
-                return `
-                    <div class="entry-card">
-                        <div class="entry-date">${formattedDate}</div>
-                        <div class="entry-details">
-                            <div class="entry-detail">
-                                <strong>${entry.dose}</strong>
-                                <span>Dose</span>
+                if (entry.type === 'medication') {
+                    return `
+                        <div class="entry-card medication">
+                            <div class="entry-header">
+                                <span class="entry-type medication">💊 Medication</span>
                             </div>
-                            ${entry.weight ? `
+                            <div class="entry-date">${formattedDate}</div>
+                            <div class="entry-details">
                                 <div class="entry-detail">
-                                    <strong>${entry.weight}</strong>
+                                    <strong>${entry.dose}</strong>
+                                    <span>Dose</span>
+                                </div>
+                                ${entry.weight ? `
+                                    <div class="entry-detail">
+                                        <strong>${entry.weight}</strong>
+                                        <span>Weight</span>
+                                    </div>
+                                ` : '<div class="entry-detail"><strong>-</strong><span>Weight</span></div>'}
+                            </div>
+                            ${entry.notes ? `<div class="entry-notes">${entry.notes}</div>` : ''}
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="entry-card daily">
+                            <div class="entry-header">
+                                <span class="entry-type">📊 Daily Check-in</span>
+                            </div>
+                            <div class="entry-date">${formattedDate}</div>
+                            <div class="entry-details">
+                                <div class="entry-detail">
+                                    <strong>${entry.weight || '-'}</strong>
                                     <span>Weight</span>
                                 </div>
-                            ` : '<div class="entry-detail"><strong>-</strong><span>Weight</span></div>'}
+                                <div class="entry-detail">
+                                    <strong>${entry.notes ? 'Yes' : 'No'}</strong>
+                                    <span>Notes</span>
+                                </div>
+                            </div>
+                            ${entry.notes ? `<div class="entry-notes">${entry.notes}</div>` : ''}
                         </div>
-                        ${entry.notes ? `<div class="entry-notes">${entry.notes}</div>` : ''}
-                    </div>
-                `;
+                    `;
+                }
             }).join('');
         }
 
@@ -505,27 +638,32 @@
             }
 
             const totalEntries = entries.length;
+            const medicationEntries = entries.filter(e => e.type === 'medication').length;
+            const dailyEntries = entries.filter(e => e.type === 'daily').length;
             const entriesWithWeight = entries.filter(e => e.weight).length;
             const latestWeight = entries.find(e => e.weight)?.weight || 'N/A';
-            const latestDose = entries[0]?.dose || 'N/A';
-
-            // Calculate days since last dose
-            const lastEntryDate = new Date(entries[0].date);
-            const daysSinceLastDose = Math.floor((new Date() - lastEntryDate) / (1000 * 60 * 60 * 24));
+            
+            // Days since last dose
+            const lastMedication = entries.find(entry => entry.type === 'medication');
+            let daysSinceLastDose = 'N/A';
+            if (lastMedication) {
+                const lastDate = new Date(lastMedication.date);
+                daysSinceLastDose = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24));
+            }
 
             statsContent.innerHTML = `
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-value">${totalEntries}</div>
-                        <div class="stat-label">Total Doses</div>
+                        <div class="stat-value">${medicationEntries}</div>
+                        <div class="stat-label">Doses Logged</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${dailyEntries}</div>
+                        <div class="stat-label">Daily Check-ins</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">${daysSinceLastDose}</div>
-                        <div class="stat-label">Days Since Last</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${latestDose}</div>
-                        <div class="stat-label">Current Dose</div>
+                        <div class="stat-label">Days Since Last Dose</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">${latestWeight}</div>
