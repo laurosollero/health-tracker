@@ -718,15 +718,15 @@
             canvas.width = container.clientWidth - 40;
             canvas.height = 250;
 
-            // Get weight data
+            // Get weight data and sort by date (chronological order)
             const weightEntries = entries
                 .filter(e => e.weight)
-                .reverse() // Chronological order
                 .map(e => ({
                     date: new Date(e.date),
                     weight: parseFloat(e.weight),
                     type: e.type
-                }));
+                }))
+                .sort((a, b) => a.date - b.date); // Sort by date, not entry order
 
             if (weightEntries.length === 0) {
                 // No weight data message
