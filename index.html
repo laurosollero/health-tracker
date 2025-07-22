@@ -307,6 +307,40 @@
             max-height: 300px;
         }
 
+        .import-preview {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .import-entry {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .import-entry.medication {
+            border-left-color: #4CAF50;
+        }
+
+        .import-entry.error {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+
+        .import-stats {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #1976d2;
+            font-weight: 600;
+        }
+
         @media (max-width: 480px) {
             .container {
                 margin: 0;
@@ -319,8 +353,8 @@
             }
 
             .tab-button {
-                font-size: 12px;
-                padding: 10px 8px;
+                font-size: 11px;
+                padding: 10px 6px;
             }
         }
     </style>
@@ -336,8 +370,37 @@
             <div class="tab-buttons">
                 <button class="tab-button active" onclick="switchTab('daily')">Daily Log</button>
                 <button class="tab-button" onclick="switchTab('medication')">Medication</button>
+                <button class="tab-button" onclick="switchTab('import')">Import</button>
                 <button class="tab-button" onclick="switchTab('history')">History</button>
                 <button class="tab-button" onclick="switchTab('stats')">Stats</button>
+            </div>
+
+            <!-- Import Tab -->
+            <div id="import" class="tab-content">
+                <div id="importMessages"></div>
+                <div class="form-group">
+                    <label for="importData">Paste your manual data here:</label>
+                    <textarea id="importData" placeholder="04/07 - 141.5 kg
+- mounjaro 5mg
+
+05/07 - 141.6 kg
+- dia com cólicas, final do dia e noite com diarreia
+
+06/07 - 140.1 kg
+- teve mais cólicas e gases, um tanto mais de diarreia" style="height: 200px;"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="importYear">Year (since dates don't include year):</label>
+                    <select id="importYear" required>
+                        <option value="2024">2024</option>
+                        <option value="2025" selected>2025</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-primary" onclick="parseImportData()">Parse and Preview</button>
+                
+                <div id="importPreview" style="margin-top: 30px;"></div>
             </div>
 
             <!-- Daily Check-in Tab -->
@@ -857,6 +920,177 @@
             ctx.fillRect(padding + 120, 10, 12, 12);
             ctx.fillStyle = '#333';
             ctx.fillText('Medication Day', padding + 140, 20);
+        }
+
+        // Parse import data
+        function parseImportData() {
+            const importData = document.getElementById('importData').value.trim();
+            const year = document.getElementById('importYear').value;
+            
+            if (!importData) {
+                showMessage('Please paste your data first', 'error', 'importMessages');
+                return;
+            }
+
+            try {
+                const parsedEntries = [];
+                const lines = importData.split('\n');
+                let currentEntry = null;
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    if (line === '') continue;
+                    
+                    // Check if this is a date line (DD/MM - weight)
+                    const dateMatch = line.match(/^(\d{2})\/(\d{2})\s*-\s*([\d.,]+)\s*kg/);
+                    
+                    if (dateMatch) {
+                        // Save previous entry if exists
+                        if (currentEntry) {
+                            parsedEntries.push(currentEntry);
+                        }
+                        
+                        // Start new entry
+                        const day = parseInt(dateMatch[1]);
+                        const month = parseInt(dateMatch[2]);
+                        const weight = parseFloat(dateMatch[3].replace(',', '.'));
+                        
+                        // Create date (assuming current year if not specified)
+                        const date = new Date(parseInt(year), month - 1, day, 12, 0); // Set to noon
+                        
+                        currentEntry = {
+                            id: Date.now() + Math.random(),
+                            date: date.toISOString().slice(0, 16),
+                            weight: weight,
+                            notes: [],
+                            type: 'daily',
+                            dose: null
+                        };
+                    }
+                    // Check if this is a note line (starts with -)
+                    else if (line.startsWith('-') && currentEntry) {
+                        const note = line.substring(1).trim();
+                        
+                        // Check if it's a medication note
+                        const medMatch = note.match(/mounjaro\s+([\d.,]+)\s*mg/i);
+                        if (medMatch) {
+                            const dose = parseFloat(medMatch[1].replace(',', '.'));
+                            currentEntry.type = 'medication';
+                            currentEntry.dose = dose + 'mg';
+                        } else if (note !== '') {
+                            currentEntry.notes.push(note);
+                        }
+                    }
+                }
+                
+                // Don't forget the last entry
+                if (currentEntry) {
+                    parsedEntries.push(currentEntry);
+                }
+                
+                // Convert notes array to string
+                parsedEntries.forEach(entry => {
+                    if (entry.notes.length > 0) {
+                        entry.notes = entry.notes.join('. ');
+                    } else {
+                        entry.notes = null;
+                    }
+                });
+                
+                displayImportPreview(parsedEntries);
+                
+            } catch (error) {
+                showMessage(`Error parsing data: ${error.message}`, 'error', 'importMessages');
+            }
+        }
+
+        // Display import preview
+        function displayImportPreview(parsedEntries) {
+            const previewDiv = document.getElementById('importPreview');
+            
+            if (parsedEntries.length === 0) {
+                previewDiv.innerHTML = '<div class="no-data">No entries could be parsed</div>';
+                return;
+            }
+            
+            const medicationCount = parsedEntries.filter(e => e.type === 'medication').length;
+            const dailyCount = parsedEntries.filter(e => e.type === 'daily').length;
+            
+            let html = `
+                <div class="import-preview">
+                    <div class="import-stats">
+                        Found ${parsedEntries.length} entries: ${medicationCount} medication doses, ${dailyCount} daily check-ins
+                    </div>
+                    
+                    <h3>Preview:</h3>
+            `;
+            
+            parsedEntries.forEach(entry => {
+                const date = new Date(entry.date);
+                const formattedDate = date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                html += `
+                    <div class="import-entry ${entry.type}">
+                        <strong>${formattedDate}</strong><br>
+                        <strong>Weight:</strong> ${entry.weight} kg<br>
+                        ${entry.dose ? `<strong>Dose:</strong> ${entry.dose}<br>` : ''}
+                        ${entry.notes ? `<strong>Notes:</strong> ${entry.notes}<br>` : ''}
+                        <small><em>Type: ${entry.type}</em></small>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    <button class="btn btn-success" onclick="confirmImport(${JSON.stringify(parsedEntries).replace(/"/g, '&quot;')})">
+                        ✅ Import These ${parsedEntries.length} Entries
+                    </button>
+                </div>
+            `;
+            
+            previewDiv.innerHTML = html;
+        }
+
+        // Confirm and import data
+        function confirmImport(parsedEntries) {
+            try {
+                // Add all parsed entries to the main entries array
+                entries = [...parsedEntries, ...entries];
+                
+                // Sort by date to maintain chronological order
+                entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                // Remove duplicates based on date and weight
+                const uniqueEntries = [];
+                const seen = new Set();
+                
+                entries.forEach(entry => {
+                    const key = `${entry.date}-${entry.weight}-${entry.type}`;
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        uniqueEntries.push(entry);
+                    }
+                });
+                
+                entries = uniqueEntries;
+                
+                // Save to storage
+                saveData();
+                
+                // Clear import form
+                document.getElementById('importData').value = '';
+                document.getElementById('importPreview').innerHTML = '';
+                
+                // Update displays
+                displayEntries();
+                displayStats();
+                updateDaysSinceLastDose();
+                
+                showMessage(`Successfully imported ${parsedEntries.length} entries!`, 'success', 'importMessages');
+                
+            } catch (error) {
+                showMessage(`Error importing data: ${error.message}`, 'error', 'importMessages');
+            }
         }
 
         // Export data
