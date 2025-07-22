@@ -805,16 +805,20 @@
             const chartWidth = canvas.width - 2 * padding;
             const chartHeight = canvas.height - 2 * padding;
 
-            // Find min/max values
+            // Find min/max values for better scaling
             const weights = weightEntries.map(e => e.weight);
-            const minWeight = Math.min(...weights);
-            const maxWeight = Math.max(...weights);
-            const weightRange = maxWeight - minWeight || 1; // Avoid division by zero
+            const minWeightRaw = Math.min(...weights);
+            const maxWeightRaw = Math.max(...weights);
+            
+            // Round to nice scale values (.0 and .5)
+            const minWeight = Math.floor(minWeightRaw * 2) / 2; // Round down to nearest .5
+            const maxWeight = Math.ceil(maxWeightRaw * 2) / 2;   // Round up to nearest .5
+            const weightRange = maxWeight - minWeight || 1;
 
             const dates = weightEntries.map(e => e.date);
             const minDate = Math.min(...dates);
             const maxDate = Math.max(...dates);
-            const timeRange = maxDate - minDate || 1; // Avoid division by zero
+            const timeRange = maxDate - minDate || 1;
 
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -823,17 +827,28 @@
             ctx.fillStyle = '#f8f9fa';
             ctx.fillRect(padding, padding, chartWidth, chartHeight);
 
-            // Draw grid lines
+            // Draw grid lines and labels
             ctx.strokeStyle = '#e9ecef';
             ctx.lineWidth = 1;
             
-            // Horizontal grid lines (weight)
-            for (let i = 0; i <= 5; i++) {
-                const y = padding + (i / 5) * chartHeight;
+            // Calculate number of weight intervals (each 0.5kg)
+            const weightSteps = Math.ceil(weightRange / 0.5);
+            const maxSteps = 10; // Don't show too many lines
+            const stepSize = weightSteps > maxSteps ? 1.0 : 0.5; // Use 1.0kg steps if too many
+            
+            // Horizontal grid lines (weight) - at .0 and .5 intervals
+            for (let weight = minWeight; weight <= maxWeight; weight += stepSize) {
+                const y = padding + chartHeight - ((weight - minWeight) / weightRange) * chartHeight;
                 ctx.beginPath();
                 ctx.moveTo(padding, y);
                 ctx.lineTo(padding + chartWidth, y);
                 ctx.stroke();
+                
+                // Weight labels (Y-axis)
+                ctx.fillStyle = '#666';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(weight.toFixed(1), padding - 10, y + 4);
             }
 
             // Vertical grid lines (time)
@@ -889,13 +904,7 @@
             ctx.font = '12px Arial';
             ctx.textAlign = 'center';
 
-            // Weight labels (Y-axis)
-            for (let i = 0; i <= 5; i++) {
-                const weight = minWeight + (i / 5) * weightRange;
-                const y = padding + chartHeight - (i / 5) * chartHeight;
-                ctx.textAlign = 'right';
-                ctx.fillText(weight.toFixed(1), padding - 10, y + 4);
-            }
+            // Date labels (X-axis) - already handled above for weight labels
 
             // Date labels (X-axis)
             for (let i = 0; i <= 4; i++) {
