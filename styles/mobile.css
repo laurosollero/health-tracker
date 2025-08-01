@@ -1,0 +1,242 @@
+/* Mobile-specific styles for Mounjaro Tracker */
+
+/* Mobile Optimizations */
+@media (max-width: 480px) {
+  .app-container {
+    margin: 0;
+    border-radius: 0;
+    min-height: 100vh;
+  }
+  
+  .main-content {
+    max-width: 100%;
+    margin-top: var(--header-height);
+  }
+  
+  .content-section {
+    padding: var(--spacing-md);
+  }
+  
+  /* Header adjustments */
+  .header-content {
+    padding: 0 var(--spacing-md);
+  }
+  
+  .app-title {
+    font-size: var(--font-size-lg);
+  }
+  
+  .app-icon {
+    font-size: var(--font-size-xl);
+  }
+  
+  /* Tab navigation */
+  .tab-navigation {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-xs);
+  }
+  
+  .tab-button {
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-sm) var(--spacing-xs);
+    min-height: 44px;
+  }
+  
+  /* Entry cards */
+  .entry-details {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .entry-card {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .entry-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .delete-btn {
+    position: static;
+    align-self: flex-end;
+    margin-top: var(--spacing-sm);
+  }
+  
+  /* Stats grid */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .stat-card {
+    padding: var(--spacing-md);
+  }
+  
+  .stat-value {
+    font-size: var(--font-size-2xl);
+  }
+  
+  /* Forms */
+  .form-group {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: var(--spacing-md);
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Buttons */
+  .btn {
+    padding: var(--spacing-md);
+    font-size: var(--font-size-base);
+    min-height: 48px;
+  }
+  
+  /* Chart container */
+  .chart-container {
+    padding: var(--spacing-md);
+    margin: var(--spacing-md) 0;
+  }
+  
+  .chart-controls {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+  
+  .chart-nav-btn {
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  /* Import sections */
+  .import-preview {
+    padding: var(--spacing-md);
+  }
+  
+  .import-entry {
+    padding: var(--spacing-sm);
+  }
+  
+  /* Messages */
+  .message {
+    padding: var(--spacing-sm);
+    margin: var(--spacing-md) 0;
+    font-size: var(--font-size-sm);
+  }
+  
+  /* Days since */
+  .days-since {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Large mobile/small tablet */
+@media (min-width: 481px) and (max-width: 768px) {
+  .main-content {
+    max-width: 600px;
+  }
+  
+  .content-section {
+    padding: var(--spacing-lg);
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .entry-details {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .btn {
+    min-height: 48px;
+  }
+  
+  .tab-button {
+    min-height: 44px;
+  }
+  
+  .delete-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .chart-nav-btn {
+    min-height: 44px;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .entry-card {
+    border: 2px solid var(--border-color);
+  }
+  
+  .btn {
+    border: 2px solid transparent;
+  }
+  
+  .btn-primary {
+    border-color: var(--primary-color);
+  }
+  
+  .btn-success {
+    border-color: var(--medication-color);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .tab-content {
+    animation: none;
+  }
+  
+  .entry-card:hover {
+    transform: none;
+  }
+  
+  .btn:hover {
+    transform: none;
+  }
+}
+
+/* Dark mode mobile adjustments */
+@media (prefers-color-scheme: dark) and (max-width: 480px) {
+  .import-entry.error {
+    background-color: #7f1d1d;
+    color: #fecaca;
+  }
+  
+  .entry-detail {
+    background-color: var(--gray-800);
+  }
+  
+  .entry-notes {
+    background-color: var(--gray-800);
+  }
+  
+  .no-data {
+    background-color: var(--gray-800);
+    border-color: var(--gray-700);
+  }
+}

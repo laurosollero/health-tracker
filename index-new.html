@@ -165,8 +165,8 @@
                         
                         <!-- Import Method Selection -->
                         <div class="tab-navigation" style="margin-bottom: 20px;">
-                            <button class="tab-button active" data-method="text">Text Import</button>
-                            <button class="tab-button" data-method="json">JSON Import</button>
+                            <button class="tab-button active" onclick="switchImportMethod('text')">Text Import</button>
+                            <button class="tab-button" onclick="switchImportMethod('json')">JSON Import</button>
                         </div>
                         
                         <!-- Text Import Section -->
@@ -191,7 +191,7 @@
                                 </select>
                             </div>
                             
-                            <button class="btn btn-primary" id="parseTextBtn">Parse and Preview</button>
+                            <button class="btn btn-primary" onclick="parseImportData()">Parse and Preview</button>
                         </div>
                         
                         <!-- JSON Import Section -->
@@ -222,7 +222,7 @@
 ]' style="height: 200px; font-family: monospace; font-size: 14px;"></textarea>
                             </div>
                             
-                            <button class="btn btn-primary" id="parseJsonBtn">Load and Preview JSON</button>
+                            <button class="btn btn-primary" onclick="parseJsonImport()">Load and Preview JSON</button>
                         </div>
                         
                         <div id="importPreview"></div>
