@@ -10,6 +10,11 @@ class ChartRenderer {
         this.currentData = [];
     }
 
+    // Helper method to get CSS custom property values
+    getCSS(property) {
+        return getComputedStyle(document.documentElement).getPropertyValue(property).trim();
+    }
+
     // Initialize chart canvas
     initCanvas(canvasId = 'weightChart') {
         this.canvas = document.getElementById(canvasId);
@@ -92,13 +97,17 @@ class ChartRenderer {
 
     // Draw background
     drawBackground(padding, chartWidth, chartHeight) {
-        this.ctx.fillStyle = '#f8f9fa';
+        const backgroundColor = this.getCSS('--surface-color');
+        this.ctx.fillStyle = backgroundColor;
         this.ctx.fillRect(padding, padding, chartWidth, chartHeight);
     }
 
     // Draw grid lines and labels
     drawGrid(padding, chartWidth, chartHeight, minWeight, maxWeight, weightRange, minDate, maxDate, timeRange) {
-        this.ctx.strokeStyle = '#e9ecef';
+        const gridColor = this.getCSS('--border-light');
+        const textColor = this.getCSS('--text-secondary');
+        
+        this.ctx.strokeStyle = gridColor;
         this.ctx.lineWidth = 1;
         
         // Calculate weight step size
@@ -116,7 +125,7 @@ class ChartRenderer {
             this.ctx.stroke();
             
             // Weight labels (Y-axis)
-            this.ctx.fillStyle = '#666';
+            this.ctx.fillStyle = textColor;
             this.ctx.font = '12px var(--font-family)';
             this.ctx.textAlign = 'right';
             this.ctx.fillText(weight.toFixed(1), padding - 10, y + 4);
@@ -132,7 +141,7 @@ class ChartRenderer {
         }
 
         // Date labels (X-axis)
-        this.ctx.fillStyle = '#666';
+        this.ctx.fillStyle = textColor;
         this.ctx.font = '12px var(--font-family)';
         this.ctx.textAlign = 'center';
         
@@ -178,7 +187,9 @@ class ChartRenderer {
             const y = padding + chartHeight - ((entry.weight - minWeight) / weightRange) * chartHeight;
 
             // Point color based on entry type
-            this.ctx.fillStyle = entry.type === 'medication' ? '#10b981' : '#2563eb';
+            const primaryColor = this.getCSS('--primary-color');
+            const medicationColor = this.getCSS('--medication-color');
+            this.ctx.fillStyle = entry.type === 'medication' ? medicationColor : primaryColor;
             this.ctx.beginPath();
             this.ctx.arc(x, y, 6, 0, 2 * Math.PI);
             this.ctx.fill();
@@ -195,22 +206,28 @@ class ChartRenderer {
         this.ctx.textAlign = 'left';
         this.ctx.font = '12px var(--font-family)';
         
+        // Get colors from CSS variables
+        const textColor = this.getCSS('--text-color');
+        const primaryColor = this.getCSS('--primary-color');
+        const medicationColor = this.getCSS('--medication-color');
+        
         // Daily entries legend
-        this.ctx.fillStyle = '#2563eb';
+        this.ctx.fillStyle = primaryColor;
         this.ctx.fillRect(padding, 10, 12, 12);
-        this.ctx.fillStyle = '#333';
+        this.ctx.fillStyle = textColor;
         this.ctx.fillText('Daily Check-in', padding + 20, 20);
         
         // Medication entries legend
-        this.ctx.fillStyle = '#10b981';
+        this.ctx.fillStyle = medicationColor;
         this.ctx.fillRect(padding + 120, 10, 12, 12);
-        this.ctx.fillStyle = '#333';
+        this.ctx.fillStyle = textColor;
         this.ctx.fillText('Medication Day', padding + 140, 20);
     }
 
     // Draw "no data" message
     drawNoDataMessage() {
-        this.ctx.fillStyle = '#666';
+        const textColor = this.getCSS('--text-secondary');
+        this.ctx.fillStyle = textColor;
         this.ctx.font = '16px var(--font-family)';
         this.ctx.textAlign = 'center';
         this.ctx.fillText(
@@ -381,7 +398,8 @@ class ChartRenderer {
         this.ctx.setLineDash([]);
 
         // Add trend label
-        this.ctx.fillStyle = '#f59e0b';
+        const accentColor = this.getCSS('--accent-color');
+        this.ctx.fillStyle = accentColor;
         this.ctx.font = '12px var(--font-family)';
         this.ctx.textAlign = 'right';
         const trendLabel = trendData.slope > 0 ? 'Trend: ↗' : trendData.slope < 0 ? 'Trend: ↘' : 'Trend: →';

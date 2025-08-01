@@ -53,10 +53,7 @@
                 <!-- Tab Navigation -->
                 <nav class="tab-navigation" role="tablist">
                     <button class="tab-button active" role="tab" aria-selected="true" aria-controls="daily" id="tab-daily">
-                        Daily Log
-                    </button>
-                    <button class="tab-button" role="tab" aria-selected="false" aria-controls="medication" id="tab-medication">
-                        Medication
+                        Daily Check-in
                     </button>
                     <button class="tab-button" role="tab" aria-selected="false" aria-controls="import" id="tab-import">
                         Import
@@ -92,67 +89,52 @@
                                 <small id="dailyWeight-help" class="form-text">Track your progress over time</small>
                             </div>
 
+                            <!-- Medication Checkbox -->
                             <div class="form-group">
-                                <label for="dailyNotes">How are you feeling? Any symptoms or observations?</label>
-                                <textarea id="dailyNotes" placeholder="Energy levels, appetite changes, side effects, mood, etc..." aria-describedby="dailyNotes-help"></textarea>
-                                <small id="dailyNotes-help" class="form-text">Note any changes or patterns you observe</small>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="includeMedication" class="medication-checkbox">
+                                    <label for="includeMedication" class="checkbox-label">
+                                        💊 I took my Mounjaro dose today
+                                    </label>
+                                </div>
                             </div>
 
-                            <button type="submit" class="btn btn-primary">
+                            <!-- Medication Fields (hidden by default) -->
+                            <div id="medicationFields" class="medication-fields" style="display: none;">
+                                <div class="form-group">
+                                    <label for="dose">Mounjaro Dose</label>
+                                    <select id="dose" aria-describedby="dose-help">
+                                        <option value="">Select dose</option>
+                                        <option value="2.5mg">2.5mg</option>
+                                        <option value="5mg">5mg</option>
+                                        <option value="7.5mg">7.5mg</option>
+                                        <option value="10mg">10mg</option>
+                                        <option value="12.5mg">12.5mg</option>
+                                        <option value="15mg">15mg</option>
+                                    </select>
+                                    <small id="dose-help" class="form-text">Select your prescribed dose</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="medicationNotes">Medication Notes (optional)</label>
+                                    <textarea id="medicationNotes" placeholder="Injection site, how you felt after taking it, any immediate observations..." aria-describedby="medicationNotes-help"></textarea>
+                                    <small id="medicationNotes-help" class="form-text">Notes specific to today's medication dose</small>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dailyNotes">How are you feeling today? Any symptoms or observations?</label>
+                                <textarea id="dailyNotes" placeholder="Energy levels, appetite changes, side effects, mood, sleep quality, etc..." aria-describedby="dailyNotes-help"></textarea>
+                                <small id="dailyNotes-help" class="form-text">General daily observations and how you're feeling overall</small>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" id="dailySubmitBtn">
                                 📊 Log Daily Check-in
                             </button>
                         </form>
                     </div>
                 </section>
 
-                <!-- Medication Tab -->
-                <section id="medication" class="tab-content" role="tabpanel" aria-labelledby="tab-medication">
-                    <div id="medicationMessages" aria-live="polite"></div>
-                    
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">Log Medication Dose</h2>
-                        </div>
-                        
-                        <form id="medicationForm">
-                            <div class="form-group">
-                                <label for="medDate">Date & Time</label>
-                                <input type="datetime-local" id="medDate" required aria-describedby="medDate-help">
-                                <small id="medDate-help" class="form-text">When did you take this dose?</small>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="dose">Mounjaro Dose</label>
-                                <select id="dose" required aria-describedby="dose-help">
-                                    <option value="">Select dose</option>
-                                    <option value="2.5mg">2.5mg</option>
-                                    <option value="5mg">5mg</option>
-                                    <option value="7.5mg">7.5mg</option>
-                                    <option value="10mg">10mg</option>
-                                    <option value="12.5mg">12.5mg</option>
-                                    <option value="15mg">15mg</option>
-                                </select>
-                                <small id="dose-help" class="form-text">Select your prescribed dose</small>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="medWeight">Weight (optional)</label>
-                                <input type="number" id="medWeight" step="0.1" placeholder="Enter weight in kg or lbs" aria-describedby="medWeight-help">
-                                <small id="medWeight-help" class="form-text">Track weight on medication days</small>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="medNotes">Notes about this dose</label>
-                                <textarea id="medNotes" placeholder="Injection site, how you're feeling, any observations..." aria-describedby="medNotes-help"></textarea>
-                                <small id="medNotes-help" class="form-text">Record any relevant information</small>
-                            </div>
-
-                            <button type="submit" class="btn btn-success">
-                                💊 Log Medication Dose
-                            </button>
-                        </form>
-                    </div>
-                </section>
 
                 <!-- Import Tab -->
                 <section id="import" class="tab-content" role="tabpanel" aria-labelledby="tab-import">

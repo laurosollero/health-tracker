@@ -15,7 +15,6 @@ class MounjaroTracker {
         
         // Bind methods
         this.handleDailySubmission = this.handleDailySubmission.bind(this);
-        this.handleMedicationSubmission = this.handleMedicationSubmission.bind(this);
         
         this.init();
     }
@@ -65,9 +64,38 @@ class MounjaroTracker {
             dailyForm.addEventListener('submit', this.handleDailySubmission.bind(this));
         }
 
-        const medicationForm = document.getElementById('medicationForm');
-        if (medicationForm) {
-            medicationForm.addEventListener('submit', this.handleMedicationSubmission.bind(this));
+        // Medication checkbox toggle
+        const medicationCheckbox = document.getElementById('includeMedication');
+        const medicationFields = document.getElementById('medicationFields');
+        const submitBtn = document.getElementById('dailySubmitBtn');
+        
+        if (medicationCheckbox && medicationFields && submitBtn) {
+            medicationCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    medicationFields.style.display = 'block';
+                    submitBtn.innerHTML = '💊 Log Check-in + Medication';
+                    submitBtn.className = 'btn btn-success';
+                    
+                    // Make dose required when medication is checked
+                    const doseSelect = document.getElementById('dose');
+                    if (doseSelect) doseSelect.required = true;
+                } else {
+                    medicationFields.style.display = 'none';
+                    submitBtn.innerHTML = '📊 Log Daily Check-in';
+                    submitBtn.className = 'btn btn-primary';
+                    
+                    // Remove dose requirement
+                    const doseSelect = document.getElementById('dose');
+                    if (doseSelect) {
+                        doseSelect.required = false;
+                        doseSelect.value = '';
+                    }
+                    
+                    // Clear medication fields
+                    const medicationNotes = document.getElementById('medicationNotes');
+                    if (medicationNotes) medicationNotes.value = '';
+                }
+            });
         }
 
         // Import method switching
@@ -122,10 +150,20 @@ class MounjaroTracker {
         
         // Show selected tab and activate button
         const targetTab = document.getElementById(tabName);
-        const targetButton = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+        const targetButton = document.querySelector(`[aria-controls="${tabName}"]`);
         
         if (targetTab) targetTab.classList.add('active');
-        if (targetButton) targetButton.classList.add('active');
+        if (targetButton) {
+            targetButton.classList.add('active');
+            targetButton.setAttribute('aria-selected', 'true');
+        }
+        
+        // Update other buttons' aria-selected
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            if (btn !== targetButton) {
+                btn.setAttribute('aria-selected', 'false');
+            }
+        });
         
         this.currentView = tabName;
         
@@ -142,21 +180,62 @@ class MounjaroTracker {
         e.preventDefault();
         
         try {
-            const entry = {
+            const includeMedication = document.getElementById('includeMedication').checked;
+            const date = document.getElementById('dailyDate').value;
+            const weight = document.getElementById('dailyWeight').value || null;
+            const dailyNotes = document.getElementById('dailyNotes').value || null;
+            
+            // Always create a daily entry
+            const dailyEntry = {
                 id: Date.now(),
                 type: 'daily',
-                date: document.getElementById('dailyDate').value,
-                weight: document.getElementById('dailyWeight').value || null,
-                notes: document.getElementById('dailyNotes').value || null
+                date: date,
+                weight: weight,
+                notes: dailyNotes
             };
-
-            this.dataManager.addEntry(entry);
+            
+            this.dataManager.addEntry(dailyEntry);
+            let entriesAdded = 1;
+            let message = 'Daily check-in logged!';
+            
+            // If medication is included, create a separate medication entry
+            if (includeMedication) {
+                const dose = document.getElementById('dose').value;
+                const medicationNotes = document.getElementById('medicationNotes').value || null;
+                
+                if (!dose) {
+                    Utils.showMessage('Please select a dose when logging medication', 'error', 'dailyMessages');
+                    return;
+                }
+                
+                const medicationEntry = {
+                    id: Date.now() + 1, // Ensure unique ID
+                    type: 'medication',
+                    date: date,
+                    dose: dose,
+                    weight: weight, // Include weight in both entries if provided
+                    notes: medicationNotes
+                };
+                
+                this.dataManager.addEntry(medicationEntry);
+                entriesAdded = 2;
+                message = `Check-in + medication (${dose}) logged!`;
+            }
 
             // Reset form and set defaults
             document.getElementById('dailyForm').reset();
+            document.getElementById('includeMedication').checked = false;
+            document.getElementById('medicationFields').style.display = 'none';
+            document.getElementById('dailySubmitBtn').innerHTML = '📊 Log Daily Check-in';
+            document.getElementById('dailySubmitBtn').className = 'btn btn-primary';
+            
+            // Remove dose requirement
+            const doseSelect = document.getElementById('dose');
+            if (doseSelect) doseSelect.required = false;
+            
             this.setCurrentDateTime();
 
-            Utils.showMessage(`Daily check-in logged! Total entries: ${this.dataManager.getEntries().length}`, 'success', 'dailyMessages');
+            Utils.showMessage(`${message} Total entries: ${this.dataManager.getEntries().length}`, 'success', 'dailyMessages');
             this.updateUI();
             this.updateDaysSinceLastDose();
             
@@ -165,49 +244,14 @@ class MounjaroTracker {
         }
     }
 
-    handleMedicationSubmission(e) {
-        e.preventDefault();
-        
-        try {
-            const entry = {
-                id: Date.now(),
-                type: 'medication',
-                date: document.getElementById('medDate').value,
-                dose: document.getElementById('dose').value,
-                weight: document.getElementById('medWeight').value || null,
-                notes: document.getElementById('medNotes').value || null
-            };
-
-            if (!entry.dose) {
-                Utils.showMessage('Please select a dose', 'error', 'medicationMessages');
-                return;
-            }
-
-            this.dataManager.addEntry(entry);
-
-            // Reset form and set defaults
-            document.getElementById('medicationForm').reset();
-            this.setCurrentDateTime();
-            this.setLastUsedDose();
-
-            Utils.showMessage(`Medication dose logged! Total entries: ${this.dataManager.getEntries().length}`, 'success', 'medicationMessages');
-            this.updateDaysSinceLastDose();
-            this.updateUI();
-            
-        } catch (error) {
-            Utils.showMessage(`Error saving entry: ${error.message}`, 'error', 'medicationMessages');
-        }
-    }
 
     // Utility methods
     setCurrentDateTime() {
         const now = new Date();
         const currentTime = now.toISOString().slice(0, 16);
         const dailyDate = document.getElementById('dailyDate');
-        const medDate = document.getElementById('medDate');
         
         if (dailyDate) dailyDate.value = currentTime;
-        if (medDate) medDate.value = currentTime;
     }
 
     setLastUsedDose() {
