@@ -374,6 +374,33 @@ class MounjaroTracker {
             daysSinceLastDose = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24));
         }
 
+        // Calculate weight trend
+        const weightEntries = entries
+            .filter(entry => entry.weight && !isNaN(parseFloat(entry.weight)))
+            .map(entry => ({
+                ...entry,
+                weight: parseFloat(entry.weight),
+                date: new Date(entry.date).getTime()
+            }))
+            .sort((a, b) => a.date - b.date);
+
+        let trendInfo = { text: 'N/A', class: 'neutral' };
+        if (weightEntries.length >= 3) {
+            const trendData = this.chartRenderer.calculateTrendLine(weightEntries);
+            if (trendData) {
+                const totalChange = trendData.slope * trendData.xValues[trendData.xValues.length - 1];
+                const changeText = `${totalChange > 0 ? '+' : ''}${totalChange.toFixed(1)}kg`;
+                
+                if (totalChange > 0.1) {
+                    trendInfo = { text: `↗ ${changeText}`, class: 'rising' };
+                } else if (totalChange < -0.1) {
+                    trendInfo = { text: `↘ ${changeText}`, class: 'falling' };
+                } else {
+                    trendInfo = { text: '→ Stable', class: 'stable' };
+                }
+            }
+        }
+
         statsContent.innerHTML = `
             <div class="stats-grid">
                 <div class="stat-card">
@@ -391,6 +418,10 @@ class MounjaroTracker {
                 <div class="stat-card">
                     <div class="stat-value">${latestWeight}</div>
                     <div class="stat-label">Latest Weight</div>
+                </div>
+                <div class="stat-card trend-${trendInfo.class}">
+                    <div class="stat-value">${trendInfo.text}</div>
+                    <div class="stat-label">Weight Trend</div>
                 </div>
             </div>
 

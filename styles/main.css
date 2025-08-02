@@ -608,6 +608,23 @@ body {
   font-weight: 500;
 }
 
+/* Trend-specific stat card styles */
+.stat-card.trend-falling {
+  background: linear-gradient(135deg, var(--success-color), #059669);
+}
+
+.stat-card.trend-rising {
+  background: linear-gradient(135deg, var(--warning-color), #d97706);
+}
+
+.stat-card.trend-stable {
+  background: linear-gradient(135deg, var(--info-color), #1d4ed8);
+}
+
+.stat-card.trend-neutral {
+  background: linear-gradient(135deg, var(--gray-500), var(--gray-600));
+}
+
 /* Days Since Display */
 .days-since {
   background: linear-gradient(135deg, var(--info-color), #2563eb);

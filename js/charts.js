@@ -88,11 +88,16 @@ class ChartRenderer {
         // Draw weight line
         this.drawWeightLine(weightEntries, padding, chartWidth, chartHeight, minWeight, weightRange, minDate, timeRange);
 
+        // Draw trend line if we have enough data
+        if (weightEntries.length >= 3) {
+            this.drawTrendLine(weightEntries, padding, chartWidth, chartHeight, minWeight, weightRange, minDate, timeRange);
+        }
+
         // Draw data points
         this.drawDataPoints(weightEntries, padding, chartWidth, chartHeight, minWeight, weightRange, minDate, timeRange);
 
-        // Draw legend
-        this.drawLegend(padding);
+        // Draw enhanced legend with trend info
+        this.drawEnhancedLegend(padding, weightEntries);
     }
 
     // Draw background
@@ -201,8 +206,38 @@ class ChartRenderer {
         });
     }
 
-    // Draw chart legend
-    drawLegend(padding) {
+    // Draw trend line for weight data
+    drawTrendLine(weightEntries, padding, chartWidth, chartHeight, minWeight, weightRange, minDate, timeRange) {
+        const trendData = this.calculateTrendLine(weightEntries);
+        if (!trendData) return;
+
+        const accentColor = this.getCSS('--accent-color');
+        this.ctx.strokeStyle = accentColor;
+        this.ctx.lineWidth = 2;
+        this.ctx.setLineDash([8, 4]);
+        this.ctx.beginPath();
+
+        // Draw trend line across the visible data range
+        const firstEntry = weightEntries[0];
+        const lastEntry = weightEntries[weightEntries.length - 1];
+        
+        const startX = padding + ((firstEntry.date - minDate) / timeRange) * chartWidth;
+        const endX = padding + ((lastEntry.date - minDate) / timeRange) * chartWidth;
+        
+        const startWeight = trendData.intercept;
+        const endWeight = trendData.intercept + trendData.slope * trendData.xValues[trendData.xValues.length - 1];
+        
+        const startY = padding + chartHeight - ((startWeight - minWeight) / weightRange) * chartHeight;
+        const endY = padding + chartHeight - ((endWeight - minWeight) / weightRange) * chartHeight;
+
+        this.ctx.moveTo(startX, startY);
+        this.ctx.lineTo(endX, endY);
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
+    }
+
+    // Draw enhanced legend with trend information
+    drawEnhancedLegend(padding, weightEntries) {
         this.ctx.textAlign = 'left';
         this.ctx.font = '12px var(--font-family)';
         
@@ -210,6 +245,7 @@ class ChartRenderer {
         const textColor = this.getCSS('--text-color');
         const primaryColor = this.getCSS('--primary-color');
         const medicationColor = this.getCSS('--medication-color');
+        const accentColor = this.getCSS('--accent-color');
         
         // Daily entries legend
         this.ctx.fillStyle = primaryColor;
@@ -222,6 +258,39 @@ class ChartRenderer {
         this.ctx.fillRect(padding + 120, 10, 12, 12);
         this.ctx.fillStyle = textColor;
         this.ctx.fillText('Medication Day', padding + 140, 20);
+        
+        // Trend line legend and statistics
+        if (weightEntries.length >= 3) {
+            const trendData = this.calculateTrendLine(weightEntries);
+            if (trendData) {
+                // Trend line legend
+                this.ctx.strokeStyle = accentColor;
+                this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([8, 4]);
+                this.ctx.beginPath();
+                this.ctx.moveTo(padding + 260, 16);
+                this.ctx.lineTo(padding + 272, 16);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+                
+                this.ctx.fillStyle = textColor;
+                this.ctx.fillText('Trend Line', padding + 280, 20);
+                
+                // Trend statistics
+                const weightChange = trendData.slope * trendData.xValues[trendData.xValues.length - 1];
+                const trendDirection = weightChange > 0.1 ? '↗ Rising' : weightChange < -0.1 ? '↘ Falling' : '→ Stable';
+                const changeText = `(${weightChange > 0 ? '+' : ''}${weightChange.toFixed(1)}kg)`;
+                
+                this.ctx.font = '11px var(--font-family)';
+                this.ctx.fillStyle = accentColor;
+                this.ctx.fillText(`${trendDirection} ${changeText}`, padding + 380, 20);
+            }
+        }
+    }
+
+    // Original simple legend (kept for compatibility)
+    drawLegend(padding) {
+        this.drawEnhancedLegend(padding, this.currentData || []);
     }
 
     // Draw "no data" message
@@ -346,8 +415,12 @@ class ChartRenderer {
         if (n < 2) return null;
 
         // Convert dates to numeric values (days since first entry)
-        const firstDate = data[0].date.getTime();
-        const xValues = data.map(d => (d.date.getTime() - firstDate) / (1000 * 60 * 60 * 24));
+        // Handle both Date objects and timestamps
+        const firstDate = typeof data[0].date === 'number' ? data[0].date : data[0].date.getTime();
+        const xValues = data.map(d => {
+            const dateValue = typeof d.date === 'number' ? d.date : d.date.getTime();
+            return (dateValue - firstDate) / (1000 * 60 * 60 * 24);
+        });
         const yValues = data.map(d => d.weight);
 
         // Calculate slope and intercept
