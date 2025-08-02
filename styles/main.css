@@ -4,9 +4,9 @@
 /* CSS Custom Properties - Design Tokens */
 :root {
   /* Primary Colors */
-  --primary-color: #2563eb;
-  --secondary-color: #10b981;
-  --accent-color: #f59e0b;
+  --primary-color: #059669;
+  --secondary-color: #1083b9;
+  --accent-color: #e68536;
   
   /* Background Colors */
   --background-color: #f8fafc;
@@ -198,7 +198,11 @@ body {
 }
 
 .tab-button {
-  flex: 1;
+  flex: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
   padding: var(--spacing-sm) var(--spacing-md);
   background-color: var(--gray-100);
   border: 1px solid var(--border-color);
@@ -222,6 +226,10 @@ body {
   background-color: var(--gray-200);
   color: var(--text-color);
 }
+
+/* .tab-button span {
+  padding-bottom: var(--spacing-xs);
+} */
 
 /* Tab Content */
 .tab-content {
@@ -302,6 +310,9 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 .entry-type.medication {
@@ -423,9 +434,6 @@ body {
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all 0.2s ease;
-  position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
 }
 
 .delete-btn:hover {
@@ -504,7 +512,13 @@ body {
   margin: 0;
 }
 
-.checkbox-label {
+.form-group input.medication-checkbox ~ .checkbox-label {
+  width: 100%;
+}
+
+label.checkbox-label {
+  display: flex;
+  align-items: anchor-center;
   font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-color);
@@ -755,10 +769,10 @@ body {
 
 /* Export Button */
 .export-btn {
-  background: linear-gradient(135deg, var(--accent-color), #d97706);
+  background: linear-gradient(135deg, var(--accent-color), #e37114);
   margin-top: var(--spacing-lg);
 }
 
 .export-btn:hover {
-  background: linear-gradient(135deg, #d97706, var(--accent-color));
+  background: linear-gradient(135deg, #e37114, var(--accent-color));
 }

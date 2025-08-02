@@ -424,4 +424,52 @@ class Utils {
             return !!(canvas.getContext && canvas.getContext('2d'));
         })(),
     };
+
+    // SVG Icon utilities
+    static createIcon(iconName, size = 24, className = '') {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+        
+        svg.setAttribute('width', size);
+        svg.setAttribute('height', size);
+        svg.setAttribute('viewBox', '0 0 80 80');
+        svg.setAttribute('fill', 'currentColor');
+        
+        if (className) {
+            svg.setAttribute('class', className);
+        }
+        
+        use.setAttributeNS('http://www.w3.org/1999/xlink', 'href', `#icon-${iconName}`);
+        svg.appendChild(use);
+        
+        return svg;
+    }
+
+    static replaceIconsInElement(element) {
+        // Find all elements with data-icon attribute and replace with SVG
+        const iconElements = element.querySelectorAll('[data-icon]');
+        
+        iconElements.forEach(el => {
+            const iconName = el.getAttribute('data-icon');
+            const size = el.getAttribute('data-size') || 24;
+            const className = el.getAttribute('class') || '';
+            
+            const svg = this.createIcon(iconName, size, className);
+            
+            // Copy any additional attributes
+            Array.from(el.attributes).forEach(attr => {
+                if (!['data-icon', 'data-size', 'class'].includes(attr.name)) {
+                    svg.setAttribute(attr.name, attr.value);
+                }
+            });
+            
+            el.parentNode.replaceChild(svg, el);
+        });
+    }
+
+    static getIconHTML(iconName, size = 24, className = '') {
+        return `<svg width="${size}" height="${size}" viewBox="0 0 80 80" fill="currentColor" class="${className}">
+            <use href="#icon-${iconName}"></use>
+        </svg>`;
+    }
 }

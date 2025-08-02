@@ -1,0 +1,19 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main logo background -->
+  <rect x="10" y="10" width="80" height="80" rx="12" fill="#059669"/>
+  
+  <!-- Medical cross -->
+  <rect x="45" y="25" width="10" height="30" rx="2" fill="white"/>
+  <rect x="35" y="35" width="30" height="10" rx="2" fill="white"/>
+  
+  <!-- MT Letters (smaller, positioned below cross) -->
+  <text x="50" y="72" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="white">MT</text>
+  
+  <!-- Small tracking dots (representing data points) -->
+  <circle cx="25" cy="80" r="2" fill="white" opacity="0.6"/>
+  <circle cx="35" cy="75" r="2" fill="white" opacity="0.7"/>
+  <circle cx="45" cy="78" r="2" fill="white" opacity="0.5"/>
+  <circle cx="55" cy="82" r="2" fill="white" opacity="0.8"/>
+  <circle cx="65" cy="77" r="2" fill="white" opacity="0.6"/>
+  <circle cx="75" cy="80" r="2" fill="white" opacity="0.7"/>
+</svg>
